@@ -579,11 +579,12 @@
             conversations.forEach(conv => {
                 const item = document.createElement('div');
                 item.className = `conversation-item ${conv.id === currentConversationId ? 'active' : ''}`;
+                item.setAttribute('data-id', conv.id); // 添加 data-id 属性
                 
                 // 添加图标和标题
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'conversation-title';
-                titleSpan.innerHTML = `${conv.icon || ''} ${conv.title}`;
+                titleSpan.innerHTML = `${conv.icon || '��'} ${conv.title}`;
                 
                 // 添加操作按钮容器
                 const actions = document.createElement('div');
@@ -892,13 +893,15 @@
             }
         }
 
-        // 添加编辑标题功能
+        // 修改编辑标题功能
         function editConversationTitle(id) {
             const conversations = getConversations();
             const conv = conversations.find(c => c.id === id);
             if (!conv) return;
             
-            const titleSpan = document.querySelector(`[onclick="switchToConversation('${id}')"] .conversation-title`);
+            // 修改选择器，直接从当前对话项中找到标题元素
+            const conversationItem = document.querySelector(`.conversation-item[data-id="${id}"]`);
+            const titleSpan = conversationItem.querySelector('.conversation-title');
             const currentTitle = conv.title;
             
             const input = document.createElement('input');
