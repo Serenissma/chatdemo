@@ -847,6 +847,10 @@
         window.addEventListener('load', () => {
             checkAuth();
             initMobileMenu();
+            
+            // 添加新建对话按钮的事件监听
+            document.getElementById('new-chat-btn').addEventListener('click', createNewConversation);
+            
             const conversations = getConversations();
             if (conversations.length === 0) {
                 createNewConversation();
