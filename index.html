@@ -9,6 +9,9 @@
     <!-- 添加代码高亮库 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    <!-- 添加 PDF.js 和 mammoth.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.0/mammoth.browser.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -474,6 +477,189 @@
             color: white;
             border-color: #ff4d4f;
         }
+
+        /* 在 style 标签中添加知识库管理相关样式 */
+        .knowledge-base {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .kb-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .kb-header h3 {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .upload-btn {
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .upload-btn:hover {
+            background: #e6e6e6;
+        }
+
+        .kb-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .kb-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            background: #f9f9f9;
+        }
+
+        .kb-item-name {
+            font-size: 12px;
+            color: #333;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .kb-item-remove {
+            padding: 2px 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ff4d4f;
+            font-size: 12px;
+        }
+
+        .source-icon {
+            display: none;
+            position: absolute;
+            right: 40px;
+            top: 8px;
+            padding: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .message:hover .source-icon {
+            display: block;
+        }
+
+        .source-panel {
+            position: fixed;
+            right: -320px;
+            top: 0;
+            width: 320px;
+            height: 100vh;
+            background: white;
+            border-left: 1px solid #ddd;
+            transition: right 0.3s;
+            z-index: 100;
+        }
+
+        .source-panel.show {
+            right: 0;
+        }
+
+        .source-panel-header {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .source-panel-header h3 {
+            font-size: 16px;
+            color: #333;
+            margin: 0;
+        }
+
+        .close-panel-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            padding: 0 8px;
+        }
+
+        .source-panel-content {
+            padding: 15px;
+            height: calc(100vh - 51px);
+            overflow-y: auto;
+        }
+
+        .source-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+
+        .source-item-header {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .source-item-content {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .highlight-text {
+            background: yellow;
+            padding: 2px;
+        }
+
+        /* 在 style 标签中添加 */
+        .loading-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #007AFF;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -498,10 +684,26 @@
         <div class="sidebar-header">
             <button class="new-chat-btn" id="new-chat-btn">新建对话</button>
         </div>
+        
+        <!-- 添加知识库管理区域 -->
+        <div class="knowledge-base">
+            <div class="kb-header">
+                <h3>知识库</h3>
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                    <span>上传文档</span>
+                </button>
+                <input type="file" id="file-input" style="display: none" 
+                    accept=".pdf,.doc,.docx,.txt" multiple
+                    onchange="handleFileUpload(event)">
+            </div>
+            <div class="kb-list" id="kb-list">
+                <!-- 文档列表将通过 JavaScript 动态添加 -->
+            </div>
+        </div>
+        
         <div class="conversation-list" id="conversation-list">
             <!-- 对话列表将通过JavaScript动态添加 -->
         </div>
-        <!-- 添加退出按钮容器 -->
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="logout()">退出登录</button>
         </div>
@@ -514,16 +716,30 @@
                 </div>
             </div>
             <div class="input-container">
-                <div class="model-selector">
+                <div class="model-selector" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="model-label">选择工作空间：</span>
+                    <select id="workspace-select" class="model-select"></select>
                     <span class="model-label">选择模型：</span>
                     <select id="model-select" class="model-select">
                         <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
+                        <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                        <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                        <option value="deepseek">DeepSeek (deepseek-r1-distill-llama-70b)</option>
                     </select>
                 </div>
                 <div class="input-box">
                     <input type="text" id="user-input" placeholder="请输入您的问题...">
                     <button id="send-button">发送</button>
                 </div>
+            </div>
+        </div>
+        <div class="source-panel" id="source-panel">
+            <div class="source-panel-header">
+                <h3>参考来源</h3>
+                <button class="close-panel-btn" onclick="toggleSourcePanel(false)">×</button>
+            </div>
+            <div class="source-panel-content" id="source-panel-content">
+                <!-- 来源内容将通过 JavaScript 动态添加 -->
             </div>
         </div>
     </div>
@@ -534,14 +750,21 @@
         const sendButton = document.getElementById('send-button');
         let isWaitingForResponse = false;
 
-        // API配置
+        // 修改 API 配置
         const API_CONFIG = {
-            endpoint: 'https://llm.market.alicloudapi.com/v1/chat/completions',
+            endpoint: "https://openrouter.ai/api/v1/chat/completions",
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'APPCODE 1ba39b3510c5491d83e80d6d1d9c1115'
+                "Authorization": "Bearer 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",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://serenissma.github.io/chatdemo/",
+                "X-Title": "AI Knowledge Base Assistant"
             },
-            model: "gpt-3.5-turbo"
+            models: {
+                "gpt-3.5-turbo": "openai/gpt-3.5-turbo",
+                "claude-3-sonnet": "anthropic/claude-3-sonnet-20240229",
+                "claude-3.5-sonnet": "anthropic/claude-3.5-sonnet",
+                "deepseek": "deepseek/deepseek-r1-distill-llama-70b"
+            }
         };
 
         // 添加对话管理相关函数
@@ -584,7 +807,7 @@
                 // 添加图标和标题
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'conversation-title';
-                titleSpan.innerHTML = `${conv.icon || '��'} ${conv.title}`;
+                titleSpan.innerHTML = `${conv.icon || ''} ${conv.title}`;
                 
                 // 添加操作按钮容器
                 const actions = document.createElement('div');
@@ -647,14 +870,121 @@
             gfm: true
         });
 
-        async function addMessage(content, isUser = false, save = true) {
+        // 添加加载消息函数
+        function addLoadingMessage() {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai-message loading-message';
+            messageDiv.innerHTML = `
+                <div class="message-header">思考中...</div>
+                <div class="message-content">
+                    <div class="loading-dots">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return messageDiv;
+        }
+
+        // 修改 handleUserInput 函数
+        async function handleUserInput() {
+            const message = userInput.value.trim();
+            if (!message || isWaitingForResponse) return;
+
+            try {
+                addMessage(message, true);
+                userInput.value = '';
+                userInput.disabled = true;
+                sendButton.disabled = true;
+                isWaitingForResponse = true;
+
+                // 添加加载消息
+                const loadingMessage = addLoadingMessage();
+
+                // 收集知识库内容和来源信息
+                const sourcesInfo = knowledgeBase.map(doc => ({
+                    id: doc.id,
+                    filename: doc.name,
+                    content: doc.content
+                }));
+
+                const modelSelect = document.getElementById('model-select');
+                const selectedModel = API_CONFIG.models[modelSelect.value];
+
+                const requestData = {
+                    model: selectedModel,
+                    messages: [
+                        {
+                            "role": "system", 
+                            "content": `You are a helpful assistant. Please use the following knowledge base to answer questions. For each answer, specify which parts of the knowledge base you used by including [SOURCE_REF:doc_id:relevant_text] tags in your response.`
+                        },
+                        ...getCurrentConversationMessages(),
+                        {"role": "user", "content": message}
+                    ]
+                };
+
+                const response = await fetch(API_CONFIG.endpoint, {
+                    method: 'POST',
+                    headers: API_CONFIG.headers,
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('API 错误:', errorData);
+                    throw new Error(errorData.error?.message || '请求失败');
+                }
+
+                const data = await response.json();
+
+                // 移除加载消息
+                loadingMessage.remove();
+
+                if (data.choices?.[0]?.message?.content) {
+                    // 解析响应中的来源引用
+                    const content = data.choices[0].message.content;
+                    const sources = extractSourceReferences(content, sourcesInfo);
+                    
+                    // 移除响应中的引用标记
+                    const cleanContent = content.replace(/\[SOURCE_REF:.*?\]/g, '');
+                    
+                    // 获取真实的模型名称
+                    const realModel = data.model || selectedModel;
+                    addMessage(cleanContent, false, true, sources, realModel);
+                }
+
+            } catch (error) {
+                // 移除加载消息
+                loadingMessage?.remove();
+                console.error('错误:', error);
+                addMessage(`错误: ${error.message}`);
+            } finally {
+                isWaitingForResponse = false;
+                userInput.disabled = false;
+                sendButton.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        // 修改 addMessage 函数，添加 model 参数
+        async function addMessage(content, isUser = false, save = true, sources = [], model = '') {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
 
-            // 添加发送者信息
+            // 修改发送者信息显示
             const headerDiv = document.createElement('div');
             headerDiv.className = 'message-header';
-            headerDiv.textContent = isUser ? '我' : API_CONFIG.model;
+            if (isUser) {
+                headerDiv.textContent = '我';
+            } else {
+                // 使用真实的模型名称，如果没有则使用选择器中的名称
+                const modelSelect = document.getElementById('model-select');
+                const modelName = model || modelSelect.options[modelSelect.selectedIndex].text;
+                headerDiv.textContent = modelName;
+            }
             messageDiv.appendChild(headerDiv);
 
             // 添加消息内容（使用 Markdown 解析）
@@ -702,6 +1032,16 @@
             };
             messageDiv.appendChild(copyButton);
 
+            // 如果有来源信息，添加来源图标
+            if (!isUser && sources.length > 0) {
+                const sourceIcon = document.createElement('button');
+                sourceIcon.className = 'source-icon';
+                sourceIcon.innerHTML = '📚';
+                sourceIcon.title = '查看来源';
+                sourceIcon.onclick = () => showSources(sources);
+                messageDiv.appendChild(sourceIcon);
+            }
+
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -730,56 +1070,85 @@
             }
         }
 
-        // 修改handleUserInput函数以支持对话历史
-        async function handleUserInput() {
-            const message = userInput.value.trim();
-            if (!message || isWaitingForResponse) return;
+        // 知识库管理
+        let knowledgeBase = [];
 
-            try {
-                addMessage(message, true);
-                userInput.value = '';
-                userInput.disabled = true;
-                sendButton.disabled = true;
-                isWaitingForResponse = true;
-
-                const requestData = {
-                    model: API_CONFIG.model,
-                    messages: [
-                        {"role": "system", "content": "You are a helpful assistant."},
-                        ...getCurrentConversationMessages(),
-                        {"role": "user", "content": message}
-                    ]
-                };
-
-                const response = await fetch(API_CONFIG.endpoint, {
-                    method: 'POST',
-                    headers: API_CONFIG.headers,
-                    body: JSON.stringify(requestData)
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error?.message || '请求失败');
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            for (let file of files) {
+                try {
+                    const text = await extractTextFromFile(file);
+                    knowledgeBase.push({
+                        id: 'doc_' + Date.now(),
+                        name: file.name,
+                        content: text
+                    });
+                    updateKnowledgeBaseList();
+                    saveKnowledgeBase();
+                } catch (error) {
+                    console.error('文件处理错误:', error);
+                    alert('文件处理失败: ' + error.message);
                 }
+            }
+            event.target.value = ''; // 清空文件选择
+        }
 
-                if (data.choices?.[0]?.message?.content) {
-                    addMessage(data.choices[0].message.content);
-                } else {
-                    throw new Error('无效的API响应格式');
-                }
+        async function extractTextFromFile(file) {
+            // 这里需要根据文件类型使用不同的解析方法
+            if (file.type === 'text/plain') {
+                return await file.text();
+            } else if (file.type === 'application/pdf') {
+                // 需要添加 PDF.js 库来处理 PDF
+                return await extractPDFText(file);
+            } else if (file.type.includes('word')) {
+                // 需要添加 mammoth.js 库来处理 Word
+                return await extractWordText(file);
+            }
+            throw new Error('不支持的文件类型');
+        }
 
-            } catch (error) {
-                console.error('错误:', error);
-                addMessage(`错误: ${error.message}`);
-            } finally {
-                isWaitingForResponse = false;
-                userInput.disabled = false;
-                sendButton.disabled = false;
-                userInput.focus();
+        function updateKnowledgeBaseList() {
+            const kbList = document.getElementById('kb-list');
+            kbList.innerHTML = '';
+            
+            knowledgeBase.forEach(doc => {
+                const item = document.createElement('div');
+                item.className = 'kb-item';
+                
+                const name = document.createElement('div');
+                name.className = 'kb-item-name';
+                name.textContent = doc.name;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'kb-item-remove';
+                removeBtn.textContent = '删除';
+                removeBtn.onclick = () => removeDocument(doc.id);
+                
+                item.appendChild(name);
+                item.appendChild(removeBtn);
+                kbList.appendChild(item);
+            });
+        }
+
+        function removeDocument(id) {
+            if (confirm('确定要删除这个文档吗？')) {
+                knowledgeBase = knowledgeBase.filter(doc => doc.id !== id);
+                updateKnowledgeBaseList();
+                saveKnowledgeBase();
             }
         }
 
+        function saveKnowledgeBase() {
+            localStorage.setItem('knowledgeBase', JSON.stringify(knowledgeBase));
+        }
+
+        function loadKnowledgeBase() {
+            const saved = localStorage.getItem('knowledgeBase');
+            knowledgeBase = saved ? JSON.parse(saved) : [];
+            updateKnowledgeBaseList();
+        }
+
+        // 将 getCurrentConversationMessages 函数移到前面
         function getCurrentConversationMessages() {
             if (!currentConversationId) return [];
             
@@ -790,6 +1159,27 @@
                 role: msg.isUser ? 'user' : 'assistant',
                 content: msg.content
             })) : [];
+        }
+
+        // 添加来源引用解析函数
+        function extractSourceReferences(content, sourcesInfo) {
+            const references = [];
+            const regex = /\[SOURCE_REF:(.*?):(.*?)\]/g;
+            let match;
+
+            while ((match = regex.exec(content)) !== null) {
+                const [_, docId, relevantText] = match;
+                const source = sourcesInfo.find(s => s.id === docId);
+                if (source) {
+                    references.push({
+                        filename: source.filename,
+                        content: source.content,
+                        relevantText: relevantText
+                    });
+                }
+            }
+
+            return references;
         }
 
         // 添加用户认证
@@ -848,6 +1238,8 @@
         window.addEventListener('load', () => {
             checkAuth();
             initMobileMenu();
+            loadWorkspaces();
+            loadKnowledgeBase();
             
             // 添加新建对话按钮的事件监听
             document.getElementById('new-chat-btn').addEventListener('click', createNewConversation);
@@ -979,6 +1371,99 @@
                 checkAuth();
             }
         }
+
+        // 添加 PDF 处理函数
+        async function extractPDFText(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            let text = '';
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(item => item.str).join(' ') + '\n';
+            }
+            
+            return text;
+        }
+
+        // 添加 Word 处理函数
+        async function extractWordText(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({arrayBuffer});
+            return result.value;
+        }
+
+        // 添加显示来源的函数
+        function showSources(sources) {
+            const panel = document.getElementById('source-panel');
+            const content = document.getElementById('source-panel-content');
+            content.innerHTML = '';
+
+            sources.forEach(source => {
+                const sourceItem = document.createElement('div');
+                sourceItem.className = 'source-item';
+                
+                const header = document.createElement('div');
+                header.className = 'source-item-header';
+                header.textContent = `来源：${source.filename}`;
+                
+                const sourceContent = document.createElement('div');
+                sourceContent.className = 'source-item-content';
+                sourceContent.innerHTML = highlightText(source.content, source.relevantText);
+                
+                sourceItem.appendChild(header);
+                sourceItem.appendChild(sourceContent);
+                content.appendChild(sourceItem);
+            });
+
+            panel.classList.add('show');
+        }
+
+        // 添加面板控制函数
+        function toggleSourcePanel(show) {
+            const panel = document.getElementById('source-panel');
+            if (show) {
+                panel.classList.add('show');
+            } else {
+                panel.classList.remove('show');
+            }
+        }
+
+        // 添加文本高亮函数
+        function highlightText(content, relevantText) {
+            if (!relevantText) return content;
+            return content.replace(new RegExp(relevantText, 'gi'), 
+                match => `<span class="highlight-text">${match}</span>`);
+        }
+
+        function loadWorkspaces() {
+            const savedWorkspaces = localStorage.getItem('workspaces');
+            if (savedWorkspaces) {
+                const workspaces = JSON.parse(savedWorkspaces);
+                const workspaceSelect = document.getElementById('workspace-select');
+                workspaceSelect.innerHTML = '';
+
+                workspaces.forEach(workspace => {
+                    const option = document.createElement('option');
+                    option.value = workspace.id;
+                    option.textContent = workspace.name;
+                    workspaceSelect.appendChild(option);
+                });
+            }
+        }
+
+        // 选择工作空间后加载知识库
+        document.getElementById('workspace-select').onchange = function() {
+            const selectedWorkspaceId = this.value;
+            const workspaces = JSON.parse(localStorage.getItem('workspaces'));
+            const selectedWorkspace = workspaces.find(ws => ws.id == selectedWorkspaceId);
+            
+            if (selectedWorkspace) {
+                knowledgeBase = selectedWorkspace.files; // 加载该工作空间的文件
+                updateKnowledgeBaseList(); // 更新知识库列表
+            }
+        };
     </script>
 </body>
 </html>
